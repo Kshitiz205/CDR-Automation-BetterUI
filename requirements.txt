@@ -1,7 +1,6 @@
 pandas
 numpy
 openpyxl
-fastapi
 gunicorn
 uvicorn
 flask
