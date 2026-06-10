@@ -4,3 +4,4 @@ openpyxl
 fastapi
 gunicorn
 uvicorn
+flask
