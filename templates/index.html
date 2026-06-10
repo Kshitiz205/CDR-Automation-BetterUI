@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluetown — CDR Final Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  <style>
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      /* Ensures it fills the screen without stretching */
+      z-index: -2;
+      /* Puts it at the absolute back */
+      opacity: 1.0;
+      /* Lowers the opacity so your text and panels remain readable */
+    }
+
+    :root {
+      --bg: #ffffff;
+      --panel: rgba(255, 255, 255, 0.9);
+      --line: #000000;
+      --accent: #0033cc;
+      --accent-dim: rgba(0, 51, 204, 0.1);
+      --text: #000000;
+      --text-dim: #666666;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      text-transform: lowercase;
+    }
+
+    * {
+      border-radius: 0px !important;
+    }
+
+    body::after {
+      content: " ";
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.04) 50%);
+      z-index: 999;
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+
+
+    /* ───────── Bubble canvas background ───────── */
+    #bubbles {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ───────── Layout ───────── */
+    .wrap {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Nav */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px;
+      border-bottom: 2px solid var(--line);
+      background: #ffffff;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      /* Space between logo and text */
+    }
+
+    .nav-logo {
+      height: 48px;
+      /* Standardized height */
+      width: auto;
+      display: block;
+    }
+
+    .nav-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: 700;
+      font-size: 24px;
+      color: var(--line);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .nav-tag {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      margin-top: 2px;
+      letter-spacing: 0.2px;
+    }
+
+    .nav-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-pill {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      background: rgba(104, 178, 224, 0.08);
+      /* Added soft fill */
+      border: 1px solid var(--blue-soft);
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 88px 24px 56px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--blue);
+      border: 1px solid var(--blue-soft);
+      background: rgba(104, 178, 224, 0.06);
+      border-radius: 20px;
+      padding: 6px 16px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .35;
+        transform: scale(.65);
+      }
+    }
+
+    .hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(34px, 6vw, 60px);
+      letter-spacing: -1.5px;
+      line-height: 1.08;
+      margin-bottom: 18px;
+      text-transform: lowercase;
+      /* Default everything to lowercase */
+    }
+
+    .hero h1 .normal {
+      font-weight: 400;
+      /* Non-bold */
+      color: #2a2a2a;
+      /* Gray color */
+    }
+
+    .hero h1 .bold-black {
+      font-weight: 700;
+      /* Bold */
+      color: #2a2a2a;
+      /* Black color */
+      text-transform: uppercase;
+      /* Capitalize just this word */
+    }
+
+    .hero h1 .bold {
+      font-weight: 700;
+      /* Bold weight */
+      text-transform: lowercase;
+      /* Forces 'in seconds' to be lowercase */
+      color: var(--accent);
+      /* Optional: keep or remove for blue color */
+    }
+
+    .hero h1 .accent {
+      color: var(--blue);
+    }
+
+    .hero p {
+      color: var(--text-dim);
+      font-size: 17px;
+      line-height: 1.65;
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+
+    .stats {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+    }
+
+    .stat {
+      padding: 14px 30px;
+      text-align: center;
+      border-right: 1px solid var(--line);
+    }
+
+    .stat:last-child {
+      border-right: none;
+    }
+
+    .stat .n {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+    }
+
+    .stat .l {
+      font-size: 10.5px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 3px;
+    }
+
+    /* Body / panel */
+    .body {
+      max-width: 840px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 0 24px 80px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      margin-bottom: 20px;
+      backdrop-filter: blur(8px);
+      border-left: 6px solid var(--accent);
+      box-shadow: 4px 4px 0px var(--line);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--line);
+      background: var(--accent-dim);
+    }
+
+    .card-head svg {
+      margin-right: 12px;
+      stroke: var(--line);
+      /* Ensures icon matches your black/white theme */
+    }
+
+    .card-head-icon {
+      margin-right: 8px;
+      /* Separation between icon and title */
+    }
+
+    .card-head-meta {
+      display: flex;
+      flex-direction: column;
+      margin-left: 16px;
+      /* Explicit gap between icon and text */
+    }
+
+    .card-head-title {
+      color: var(--line);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .card-head-desc {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 1px;
+    }
+
+    .card-body {
+      padding: 32px;
+      /* Internal spacing */
+    }
+
+    /* Upload grid */
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      /* Gap between the two boxes */
+    }
+
+    @media(max-width:680px) {
+      .upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+    }
+
+    .dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: 1px dashed var(--line);
+      /* This creates the visible box border */
+      background: rgba(0, 0, 0, 0.02);
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dropzone:hover,
+    .dropzone.drag {
+      border: 1px solid var(--line);
+      background: var(--accent-dim);
+    }
+
+    .dropzone.filled {
+      border-style: solid;
+      border-color: var(--green);
+      background: rgba(74, 222, 128, 0.06);
+    }
+
+    .dropzone input {
+      display: none;
+    }
+
+    .dz-icon {
+      font-size: 26px;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .dz-text {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .dz-sub {
+      font-size: 11px;
+      color: #5b6b80;
+      margin-top: 4px;
+    }
+
+    .dz-file {
+      font-size: 12.5px;
+      color: var(--green);
+      font-weight: 600;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+
+    /* Output filename */
+    .field {
+      margin-top: 12px;
+    }
+
+    .field input[type=text] {
+      padding: 16px 20px;
+      /* More room for the text to sit inside the input box */
+      margin-bottom: 8px;
+    }
+
+    .field input[type=text]:focus {
+      outline: none;
+      border: 2px solid var(--accent);
+    }
+
+    .field-hint {
+      font-size: 11.5px;
+      color: #5b6b80;
+      margin-top: 6px;
+    }
+
+    /* Generate button */
+    .btn-generate {
+      width: 100%;
+      padding: 18px 36px;
+      border: 2px solid var(--line);
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: #ffffff;
+      color: var(--line);
+      box-shadow: 4px 4px 0px var(--line);
+      transition: all 0.1s;
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      background: var(--line);
+      color: #ffffff;
+      box-shadow: 0px 0px 0px var(--line);
+      transform: translate(4px, 4px);
+    }
+
+    .btn-generate:disabled {
+      border: 1px dashed var(--text-dim);
+      color: var(--text-dim);
+      box-shadow: none;
+      background: #f9f9f9;
+    }
+
+    /* Progress */
+    .progress-wrap {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-wrap.show {
+      display: block;
+    }
+
+    .progress-bar {
+      height: 6px;
+      border-radius: 6px;
+      background: rgba(104, 178, 224, 0.1);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue), #3a8fc7);
+      border-radius: 6px;
+      transition: width .4s ease;
+    }
+
+    .log {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .log-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--line);
+      animation: rowIn .25s ease both;
+    }
+
+    .log-row:last-child {
+      border-bottom: none;
+    }
+
+    .log-row.done {
+      color: var(--green);
+      background: rgba(74, 222, 128, 0.04);
+    }
+
+    .log-row.active {
+      color: var(--blue);
+      background: rgba(104, 178, 224, 0.05);
+    }
+
+    .log-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    @keyframes rowIn {
+      from {
+        opacity: 0;
+        transform: translateX(-6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Error */
+    .error-box {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: #fca5a5;
+      font-size: 13px;
+      display: none;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    /* Download box */
+    .dl-box {
+      display: none;
+      margin-top: 20px;
+      background: linear-gradient(135deg, rgba(104, 178, 224, 0.1), rgba(58, 143, 199, 0.05));
+      border: 1px solid var(--blue-soft);
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .dl-box.show {
+      display: block;
+      animation: rowIn .4s ease both;
+    }
+
+    .dl-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .dl-sub {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .dl-stats {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 22px;
+    }
+
+    .dl-stat-n {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--blue);
+    }
+
+    .dl-stat-l {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    .btn-download {
+      width: 100%;
+      padding: 14px 36px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      color: #06121f;
+      transition: transform .15s, box-shadow .2s;
+      box-shadow: 0 6px 20px rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(255, 255, 255, 0.2);
+    }
+
+    /* How it works */
+    .how {
+      margin-top: 48px;
+    }
+
+    .how-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media(max-width:680px) {
+      .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.015);
+    }
+
+    .step-n {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .step-t {
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .step-d {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 20px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-dim);
+      background: rgba(248, 250, 252, 0.85);
+    }
+
+    @media(max-width:600px) {
+      .footer {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+      }
+
+      .nav {
+        padding: 14px 20px;
+      }
+
+      .hero {
+        padding: 64px 16px 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <video autoplay loop muted playsinline id="bg-video">
+    <source src="/static/video.mp4" type="video/mp4">
+  </video>
+
+  <canvas id="bubbles"></canvas>
+
+  <div class="wrap">
+
+    <div class="nav">
+      <div class="nav-left">
+        <img src="/static/logo.png" class="nav-logo" alt="Bluetown">
+        <div>
+          <div class="nav-name">CDR Generator</div>
+        </div>
+      </div>
+      <div class="nav-pill">v2.0</div>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow"><span class="dot"></span>Automated Report Engine</div>
+      <h1>
+        <span class="normal">final </span>
+        <span class="bold-black">CDR </span>
+        <span class="normal">report<br></span>
+        <span class="normal">in seconds</span>
+      </h1>
+      <p>Upload your daily Input CDR and Master CDR reference — get a perfectly structured, formula-accurate Excel
+        report with all 11 sheets.</p>
+      <div class="stats">
+        <div class="stat">
+          <div class="n">11</div>
+          <div class="l">Sheets</div>
+        </div>
+        <div class="stat">
+          <div class="n">100%</div>
+          <div class="l">Accurate</div>
+        </div>
+        <div class="stat">
+          <div class="n">MTD</div>
+          <div class="l">Verified</div>
+        </div>
+        <div class="stat">
+          <div class="n">4</div>
+          <div class="l">Filters</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="card">
+        <div class="card-head">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="var(--line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <div class="card-head-meta">
+            <div class="card-head-title">Upload Source Files</div>
+            <div class="card-head-desc">both files are required to generate the cdr final report</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="upload-grid">
+            <div class="upload-box-wrapper">
+              <div class="field-label">Input Session Data</div>
+              <label class="dropzone" id="dz-input">
+                <input type="file" id="file-input" accept=".xlsx">
+                <div class="dz-text">drag & drop or click to browse</div>
+                <div class="dz-sub">input.xlsx — daily session data</div>
+                <div class="dz-file" id="dz-input-name"></div>
+              </label>
+            </div>
+
+            <div class="upload-box-wrapper">
+              <div class="field-label">Master CDR Reference</div>
+              <label class="dropzone" id="dz-master">
+                <input type="file" id="file-master" accept=".xlsx">
+                <div class="dz-text">drag & drop or click to browse</div>
+                <div class="dz-sub">master cdr — mtd lookup source</div>
+                <div class="dz-file" id="dz-master-name"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="var(--line)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <div class="card-head-meta">
+            <div class="card-head-title">Output Settings</div>
+            <div class="card-head-desc">name your output file</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="field-label">Output File Name</div>
+          <div class="field">
+            <input type="text" id="output-name" value="CDR_Final_Output" placeholder="e.g. CDR2026-06-07_final">
+            <div class="field-hint">.xlsx extension added automatically</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-generate" id="btn-generate" disabled>Upload both files to continue</button>
+
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+
+      <div class="error-box" id="error-box"></div>
+
+      <div class="dl-box" id="dl-box">
+        <div class="dl-title" id="dl-title"></div>
+        <div class="dl-sub" id="dl-sub"></div>
+        <div class="dl-stats" id="dl-stats"></div>
+        <button class="btn-download" id="btn-download">⬇ Download CDR Final (.xlsx)</button>
+      </div>
+
+      <div class="how">
+        <div class="how-title">How it works</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-n">01</div>
+            <div class="step-t">Upload Files</div>
+            <div class="step-d">Provide your daily Input CDR and the Master CDR reference</div>
+          </div>
+          <div class="step">
+            <div class="step-n">02</div>
+            <div class="step-t">MTD Lookup</div>
+            <div class="step-d">Loads Mobile & MAC keys to identify new vs returning users</div>
+          </div>
+          <div class="step">
+            <div class="step-n">03</div>
+            <div class="step-t">Filter & Enrich</div>
+            <div class="step-d">Applies TU, UU, MAC TU, MAC UU suffix COUNTIF logic</div>
+          </div>
+          <div class="step">
+            <div class="step-n">04</div>
+            <div class="step-t">Download</div>
+            <div class="step-d">11-sheet formatted Excel with all pivots and formulas</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <span>© 2026 Bluetown · Connecting the unconnected</span>
+      <span>CDR Automation Engine v2.0</span>
+    </div>
+
+  </div>
+
+  <script src="/static/bubbles.js"></script>
+  <script src="/static/main.js"></script>
+</body>
+
+</html>
